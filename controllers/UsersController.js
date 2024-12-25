@@ -1,71 +1,40 @@
-import { ObjectId } from 'mongodb';
+/* eslint-disable import/no-named-as-default */
 import sha1 from 'sha1';
-import Queue from 'bull';
+import Queue from 'bull/lib/queue';
 import dbClient from '../utils/db';
-import userUtils from '../utils/user';
 
-const userQueue = new Queue('userQueue');
+const userQueue = new Queue('email sending');
 
-class UsersController {
-  /**
-   * Creates a new user with email and password.
-   *
-   * - Requires email and password. Returns errors if missing.
-   * - Hashes the password with SHA1 before saving.
-   * - Returns the new user (id and email) on success.
-   * - Returns an error if the email already exists.
-   */
-  static async postNew(request, response) {
-    const { email, password } = request.body;
+export default class UsersController {
+  static async postNew(req, res) {
+    const email = req.body ? req.body.email : null;
+    const password = req.body ? req.body.password : null;
 
-    if (!email) return response.status(400).send({ error: 'Missing email' });
-    if (!password) return response.status(400).send({ error: 'Missing password' });
-
-    // Check if the email already exists in the database
-    const emailExists = await dbClient.usersCollection.findOne({ email });
-    if (emailExists) return response.status(400).send({ error: 'Already exist' });
-
-    // Hash the password with SHA1
-    const sha1Password = sha1(password);
-
-    let result;
-    try {
-      // Insert the new user into the database
-      result = await dbClient.usersCollection.insertOne({
-        email,
-        password: sha1Password,
-      });
-
-      // Create the user object to send in the response
-      const user = { id: result.insertedId.toString(), email };
-
-      // Add a job to the queue to handle background tasks
-      await userQueue.add({ userId: result.insertedId.toString() });
-
-      // Send the response with the new user data
-      return response.status(201).send(user);
-    } catch (err) {
-      // Log error and respond with 500 status
-      console.error('Error creating user:', err);
-      return response.status(500).send({ error: 'Error creating user.' });
+    if (!email) {
+      res.status(400).json({ error: 'Missing email' });
+      return;
     }
+    if (!password) {
+      res.status(400).json({ error: 'Missing password' });
+      return;
+    }
+    const user = await (await dbClient.usersCollection()).findOne({ email });
+
+    if (user) {
+      res.status(400).json({ error: 'Already exist' });
+      return;
+    }
+    const insertionInfo = await (await dbClient.usersCollection())
+      .insertOne({ email, password: sha1(password) });
+    const userId = insertionInfo.insertedId.toString();
+
+    userQueue.add({ userId });
+    res.status(201).json({ email, id: userId });
   }
 
-  /**
-   * Retrieves the user based on the token used.
-   *
-   * - Returns the user (id and email) if found.
-   * - Returns an 'Unauthorized' error if not found.
-   */
-  static async getMe(request, response) {
-    const { userId } = await userUtils.getUserIdAndKey(request);
-    const user = await userUtils.getUser({ _id: ObjectId(userId) });
+  static async getMe(req, res) {
+    const { user } = req;
 
-    if (!user) return response.status(401).send({ error: 'Unauthorized' });
-
-    const processedUser = { id: user._id, email: user.email };
-    return response.status(200).send(processedUser);
+    res.status(200).json({ email: user.email, id: user._id.toString() });
   }
 }
-
-export default UsersController;

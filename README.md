@@ -1,31 +1,47 @@
 # Files Manager
 
-This project is a compilation of back-end concepts: authentication, NodeJS, MongoDB, Redis, pagination and background processing.
+[![Coverage Status](https://coveralls.io/repos/github/B3zaleel/alx-files_manager/badge.svg?branch=main)](https://coveralls.io/github/B3zaleel/alx-files_manager?branch=main)
 
-The objective is to build a simple platform to upload and view files with:
+A simple file management API built with Express, MongoDB, Redis, Bull, and Node.js.
 
-- User authentication via a token
-- Listing of all files
-- Uploading a new file
-- Changing permissions of a file
-- Viewing a file
-- Generating thumbnails for images
+## Requirements
 
-## Core technologies
+### Applications
 
-|                                                                                                         |                                                                                      |                                                                                              |
-| ------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------- |
-| ![Redis](https://upload.wikimedia.org/wikipedia/en/thumb/6/6b/Redis_Logo.svg/1000px-Redis_Logo.svg.png) | ![MongoDB](https://webassets.mongodb.com/_com_assets/cms/mongodb_logo1-76twgcu2dm.png) | ![NodeJS](https://d2eip9sf3oo6c2.cloudfront.net/tags/images/000/000/256/full/nodejslogo.png) |
++ Node.js
++ Yarn (the package manager/resource negotiator)
 
-## Testing and Jobs
+### APIs
 
-A queueing job mechanism for creating thumbnails of photos uploaded to the application is included in the project. When a new user is created, it also leverages this feature to generate a welcome message. Bull is used in all of this. 
-![Bull & NodeJS](https://raw.githubusercontent.com/OptimalBits/bull/master/support/logo%402x.png)
++ A Google API should be created with at least an email sending scope and a valid URL (e.g.; `http://localhost:5000/`) should be one of the redirect URIs. The `credentials.json` file should be stored in the root directory of this project.
 
-Mocha is used in combination with Chai for testing the app.
+### Environment Variables
 
-![Mocha & Chai](https://miro.medium.com/max/499/0*WpXBkrfgR2g9dw2T.png)
+The required environment variables should be stored in a file named `.env` and each line should have the format `Name=Value`. The table below lists the environment variables that will be used by this server:
 
-## Authors
-Emediong Francis: emediongfrancis@gmail.com <br>
-Divine Chisom Ukonu: divinechisom1995@gmail.com
+| Name | Required | Description |
+|:-|:-|:-|
+| GOOGLE_MAIL_SENDER | Yes | The email address of the account responsible for sending emails to users. |
+| PORT | No (Default: `5000`)| The port the server should listen at. |
+| DB_HOST | No (Default: `localhost`)| The database host. |
+| DB_PORT | No (Default: `27017`)| The database port. |
+| DB_DATABASE | No (Default: `files_manager`)| The database name. |
+| FOLDER_PATH | No (Default: `/tmp/files_manager` (Linux, Mac OS X) & `%TEMP%/files_manager` (Windows)) | The local folder where files are saved. |
+
+## Installation
+
++ Clone this repository and switch to the cloned repository's directory.
++ Install the packages using `yarn install` or `npm install`.
+
+## Usage
+
+Start the Redis and MongoDB services on your system and run `yarn start-server` or `npm run start-server`.
+
+## Tests
+
++ Create a separate `.env` file for the tests named `.env.test` and store the value of the environment variables for the testing event in it.
++ Run `yarn test` or `npm run test` to execute the E2E tests.
+
+## Documentation
+
++ TODO: Generate OpenAPI documentation with [**apidoc**](https://www.npmjs.com/package/apidoc).
