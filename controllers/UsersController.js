@@ -21,25 +21,34 @@ class UsersController {
     if (!email) return response.status(400).send({ error: 'Missing email' });
     if (!password) return response.status(400).send({ error: 'Missing password' });
 
+    // Check if the email already exists in the database
     const emailExists = await dbClient.usersCollection.findOne({ email });
     if (emailExists) return response.status(400).send({ error: 'Already exist' });
 
+    // Hash the password with SHA1
     const sha1Password = sha1(password);
 
     let result;
     try {
+      // Insert the new user into the database
       result = await dbClient.usersCollection.insertOne({
         email,
         password: sha1Password,
       });
+
+      // Create the user object to send in the response
+      const user = { id: result.insertedId.toString(), email };
+
+      // Add a job to the queue to handle background tasks
+      await userQueue.add({ userId: result.insertedId.toString() });
+
+      // Send the response with the new user data
+      return response.status(201).send(user);
     } catch (err) {
-      await userQueue.add({});
+      // Log error and respond with 500 status
+      console.error('Error creating user:', err);
       return response.status(500).send({ error: 'Error creating user.' });
     }
-
-    const user = { id: result.insertedId, email };
-    await userQueue.add({ userId: result.insertedId.toString() });
-    return response.status(201).send(user);
   }
 
   /**
